@@ -9,9 +9,10 @@ namespace BubbleChart
 
     public class ChartData
     {
-        public int Before { get; set; }
-        public int After { get; set; }
+        public double Before { get; set; }
+        public double After { get; set; }
         public int Media { get; set; }
+        public int Tech { get; set; }
         public int Count { get; set; }
         public override int GetHashCode()
         {

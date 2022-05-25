@@ -27,7 +27,7 @@ namespace BubbleChart
             {
                 for (int x = 0; x < width; x++)
                 {
-                    if ((double)x / (double)width * (double)height < height - y) bmp.SetPixel(x, y, Color.FromArgb(127, 219, 238, 244));
+                    if (x * 6.0 / 7.0 < height - (y + height * 3.0 / 14.0)) bmp.SetPixel(x, y, Color.FromArgb(127, 219, 238, 244));
                     else bmp.SetPixel(x, y, Color.FromArgb(255, 219, 238, 244));
                 }
             }
@@ -47,19 +47,19 @@ namespace BubbleChart
             if (checkBox_Web.Checked) medium = 1;
             foreach (var dataPoint in data.Values)
             {
-                if (dataPoint.Media == medium)
+                if (true)
                 {
-                    using (System.Drawing.Font font = new System.Drawing.Font("Courier New", 36, FontStyle.Bold, GraphicsUnit.Pixel))
+                    using (System.Drawing.Font font = new System.Drawing.Font("Courier New", 28, FontStyle.Bold, GraphicsUnit.Pixel))
                     {
-                        int offset = 17;
-                        if (dataPoint.Count >= 10) offset += 10;
-                        if (dataPoint.Count >= 100) offset += 10;
+                        int offset = 14;
+                        if (dataPoint.Count >= 10) offset += 8;
+                        if (dataPoint.Count >= 100) offset += 8;
                         int x = (int)chart1.ChartAreas[0].AxisX.ValueToPixelPosition(dataPoint.Before) - offset;
-                        int y = (int)chart1.ChartAreas[0].AxisY.ValueToPixelPosition(dataPoint.After) - 18;
+                        int y = (int)chart1.ChartAreas[0].AxisY.ValueToPixelPosition(dataPoint.After) - 12;
                         //x += chart1.Location.X;
                         //y += chart1.Location.Y;
                         System.Drawing.Point point1 = new System.Drawing.Point(x, y);
-                        TextRenderer.DrawText(e.ChartGraphics.Graphics, dataPoint.Count.ToString(), font, point1, Color.White);
+                        //TextRenderer.DrawText(e.ChartGraphics.Graphics, dataPoint.Count.ToString(), font, point1, Color.White);
                     }
                 }
             }
@@ -89,10 +89,12 @@ namespace BubbleChart
                 oSheet = oWB.ActiveSheet;
                 oXL.Visible = false;
                 int mediaIndex = getColumnIndex(oSheet, "Media");
+                int techIndex = getColumnIndex(oSheet, "Tech");
+                int countIndex = getColumnIndex(oSheet, "Count");
                 int beforeIndex = getColumnIndex(oSheet, textBox_Before.Text);
                 int afterIndex = getColumnIndex(oSheet, textBox_After.Text);
 
-                extractData(oSheet, mediaIndex, beforeIndex, afterIndex);
+                extractData(oSheet, mediaIndex, techIndex, countIndex, beforeIndex, afterIndex);
 
                 BeginInvoke(new System.Action(() =>
                 {
@@ -104,24 +106,41 @@ namespace BubbleChart
                     chart1.ChartAreas[0].AxisY.Title = textBox_YAxis.Text;
                     chart1.Titles[0].Text = textBox_Title.Text;
 
-                    int total = 0;
+                    int webTotal = 0;
+                    int vrTotal = 0;
                     foreach (var dataPoint in data.Values)
                     {
-                        if (dataPoint.Media == medium)
+                        if (dataPoint.Media == 1)
                         {
-                            total += dataPoint.Count;
+                            webTotal += dataPoint.Count;
+                        }
+                        else
+                        {
+                            vrTotal += dataPoint.Count;
                         }
                     }
 
                     foreach (var dataPoint in data.Values)
                     {
-                        if (dataPoint.Media == medium)
+                        if (true)
                         {
                             chart1.Series[0].Points.AddXY(dataPoint.Before, dataPoint.After);
-                            int percentage = (int)Math.Round((double)dataPoint.Count / (double)total * 100);
-                            chart1.Series[0].Points[chart1.Series[0].Points.Count - 1].MarkerSize = 25 + (int)Math.Sqrt(percentage * 300);
+                            int percentage = (int)Math.Round((double)dataPoint.Count / (double)webTotal * 100);
+                            if(dataPoint.Media == 2) percentage = (int)Math.Round((double)dataPoint.Count / (double)vrTotal * 100);
+                            chart1.Series[0].Points[chart1.Series[0].Points.Count - 1].MarkerSize = 5 + (int)Math.Sqrt(percentage * 300);
+                            
                             //chart1.Series[0].Points[chart1.Series[0].Points.Count - 1].Label = dataPoint.Count.ToString();
-                            chart1.Series[0].Points[chart1.Series[0].Points.Count - 1].Color = Color.FromArgb(160, 35, 88, 104);
+                            Color color = Color.Black;
+                            int alpha = 200;
+                            if(dataPoint.Tech == 2 && dataPoint.Media == 1) color = Color.FromArgb(alpha, 13, 116, 52);
+                            else if(dataPoint.Tech == 2 && dataPoint.Media == 2) color = Color.FromArgb(alpha, 116, 194, 134);
+                            else if (dataPoint.Tech == 3 && dataPoint.Media == 1) color = Color.FromArgb(alpha, 170, 19, 36);
+                            else if (dataPoint.Tech == 3 && dataPoint.Media == 2) color = Color.FromArgb(alpha, 255, 112, 120);
+                            else if (dataPoint.Tech == 4 && dataPoint.Media == 1) color = Color.FromArgb(alpha, 89, 76, 160);
+                            else if (dataPoint.Tech == 4 && dataPoint.Media == 2) color = Color.FromArgb(alpha, 167, 159, 225);
+                            else if (dataPoint.Tech == 1 && dataPoint.Media == 1) color = Color.FromArgb(alpha, 255, 190, 10);
+                            else if (dataPoint.Tech == 1 && dataPoint.Media == 2) color = Color.FromArgb(alpha, 255, 225, 25);
+                            chart1.Series[0].Points[chart1.Series[0].Points.Count - 1].Color = color;
                         }
                     }
                 }));
@@ -142,7 +161,7 @@ namespace BubbleChart
             }
         }
 
-        private Dictionary<int, ChartData> extractData(_Worksheet oSheet, int mediaIndex, int beforeIndex, int afterIndex)
+        private Dictionary<int, ChartData> extractData(_Worksheet oSheet, int mediaIndex, int techIndex, int countIndex, int beforeIndex, int afterIndex)
         {
             data = new Dictionary<int, ChartData>();
             for(int i = 2; i < 10000; i++)
@@ -151,9 +170,10 @@ namespace BubbleChart
                 {
                     var dataPoint = new ChartData();
                     dataPoint.Media = (int)oSheet.Cells[i, mediaIndex].Value;
-                    dataPoint.Before = (int)oSheet.Cells[i, beforeIndex].Value;
-                    dataPoint.After = (int)oSheet.Cells[i, afterIndex].Value;
-                    dataPoint.Count = 1;
+                    dataPoint.Tech = (int)oSheet.Cells[i, techIndex].Value;
+                    dataPoint.Count = (int)oSheet.Cells[i, countIndex].Value;
+                    dataPoint.Before = (double)oSheet.Cells[i, beforeIndex].Value;
+                    dataPoint.After = (double)oSheet.Cells[i, afterIndex].Value;
                     if(data.ContainsKey(dataPoint.GetHashCode())) data[dataPoint.GetHashCode()].Count++;
                     else data[dataPoint.GetHashCode()] = dataPoint;
                 }
