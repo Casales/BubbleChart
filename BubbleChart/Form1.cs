@@ -52,10 +52,10 @@ namespace BubbleChart
                     using (System.Drawing.Font font = new System.Drawing.Font("Courier New", 28, FontStyle.Bold, GraphicsUnit.Pixel))
                     {
                         int offset = 14;
-                        if (dataPoint.Count >= 10) offset += 8;
-                        if (dataPoint.Count >= 100) offset += 8;
+                        if (dataPoint.Count >= 10) offset += 7;
+                        if (dataPoint.Count >= 100) offset += 7;
                         int x = (int)chart1.ChartAreas[0].AxisX.ValueToPixelPosition(dataPoint.Before) - offset;
-                        int y = (int)chart1.ChartAreas[0].AxisY.ValueToPixelPosition(dataPoint.After) - 12;
+                        int y = (int)chart1.ChartAreas[0].AxisY.ValueToPixelPosition(dataPoint.After) - 14;
                         //x += chart1.Location.X;
                         //y += chart1.Location.Y;
                         System.Drawing.Point point1 = new System.Drawing.Point(x, y);
